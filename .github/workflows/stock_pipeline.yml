@@ -1,3 +1,41 @@
-git add .
-git commit -m "Add GitHub Actions workflow"
-git push
+name: Stock Market Pipeline
+
+on:
+  schedule:
+    - cron: '0 18 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance pandas psycopg2-binary
+
+      - name: Fetch stock data
+        env:
+          STOCK_DB_HOST: ${{ secrets.STOCK_DB_HOST }}
+          STOCK_DB_PORT: ${{ secrets.STOCK_DB_PORT }}
+          STOCK_DB_NAME: ${{ secrets.STOCK_DB_NAME }}
+          STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
+          STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
+        run: python scripts/fetch_stock_data.py
+
+      - name: Clean stock data
+        env:
+          STOCK_DB_HOST: ${{ secrets.STOCK_DB_HOST }}
+          STOCK_DB_PORT: ${{ secrets.STOCK_DB_PORT }}
+          STOCK_DB_NAME: ${{ secrets.STOCK_DB_NAME }}
+          STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
+          STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
+        run: python scripts/clean_stock_data.py
