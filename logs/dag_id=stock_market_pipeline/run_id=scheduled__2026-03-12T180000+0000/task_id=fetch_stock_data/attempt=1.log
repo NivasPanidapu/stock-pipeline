@@ -1,0 +1,21 @@
+[2026-03-14T01:11:56.694+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: stock_market_pipeline.fetch_stock_data scheduled__2026-03-12T18:00:00+00:00 [queued]>
+[2026-03-14T01:11:56.708+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: stock_market_pipeline.fetch_stock_data scheduled__2026-03-12T18:00:00+00:00 [queued]>
+[2026-03-14T01:11:56.709+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-03-14T01:11:56.727+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): fetch_stock_data> on 2026-03-12 18:00:00+00:00
+[2026-03-14T01:11:56.734+0000] {standard_task_runner.py:60} INFO - Started process 186 to run task
+[2026-03-14T01:11:56.739+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'stock_market_pipeline', 'fetch_stock_data', 'scheduled__2026-03-12T18:00:00+00:00', '--job-id', '41', '--raw', '--subdir', 'DAGS_FOLDER/stock_pipeline_dag.py', '--cfg-path', '/tmp/tmppf10ew08']
+[2026-03-14T01:11:56.743+0000] {standard_task_runner.py:88} INFO - Job 41: Subtask fetch_stock_data
+[2026-03-14T01:11:56.836+0000] {task_command.py:423} INFO - Running <TaskInstance: stock_market_pipeline.fetch_stock_data scheduled__2026-03-12T18:00:00+00:00 [running]> on host 0628f5048143
+[2026-03-14T01:11:57.039+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-team' AIRFLOW_CTX_DAG_ID='stock_market_pipeline' AIRFLOW_CTX_TASK_ID='fetch_stock_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-12T18:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-12T18:00:00+00:00'
+[2026-03-14T01:11:59.700+0000] {fetch_stock_data.py:72} INFO - ✓ AAPL: 60 rows inserted
+[2026-03-14T01:11:59.414+0000] {fetch_stock_data.py:72} INFO - ✓ MSFT: 60 rows inserted
+[2026-03-14T01:11:59.525+0000] {fetch_stock_data.py:72} INFO - ✓ GOOGL: 60 rows inserted
+[2026-03-14T01:11:59.635+0000] {fetch_stock_data.py:72} INFO - ✓ AMZN: 60 rows inserted
+[2026-03-14T01:11:59.768+0000] {fetch_stock_data.py:72} INFO - ✓ NVDA: 60 rows inserted
+[2026-03-14T01:11:59.897+0000] {fetch_stock_data.py:72} INFO - ✓ TSLA: 60 rows inserted
+[2026-03-14T01:12:00.070+0000] {fetch_stock_data.py:72} INFO - ✓ META: 60 rows inserted
+[2026-03-14T01:12:00.071+0000] {stock_pipeline_dag.py:31} INFO - Fetch result: {'rows_fetched': 420, 'tickers_ok': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META'], 'tickers_failed': []}
+[2026-03-14T01:12:00.114+0000] {python.py:201} INFO - Done. Returned value was: None
+[2026-03-14T01:12:00.159+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=stock_market_pipeline, task_id=fetch_stock_data, execution_date=20260312T180000, start_date=20260314T011156, end_date=20260314T011200
+[2026-03-14T01:12:00.233+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-03-14T01:12:00.267+0000] {taskinstance.py:3280} INFO - 0 downstream tasks scheduled from follow-on schedule check

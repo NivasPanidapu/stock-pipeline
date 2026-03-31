@@ -1,0 +1,36 @@
+[2026-03-09T20:06:01.044+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: stock_market_pipeline.fetch_stock_data manual__2026-03-09T20:04:32.773171+00:00 [queued]>
+[2026-03-09T20:06:01.054+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: stock_market_pipeline.fetch_stock_data manual__2026-03-09T20:04:32.773171+00:00 [queued]>
+[2026-03-09T20:06:01.055+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-03-09T20:06:01.070+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): fetch_stock_data> on 2026-03-09 20:04:32.773171+00:00
+[2026-03-09T20:06:01.074+0000] {standard_task_runner.py:60} INFO - Started process 215 to run task
+[2026-03-09T20:06:01.078+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'stock_market_pipeline', 'fetch_stock_data', 'manual__2026-03-09T20:04:32.773171+00:00', '--job-id', '12', '--raw', '--subdir', 'DAGS_FOLDER/stock_pipeline_dag.py', '--cfg-path', '/tmp/tmpnyufwy9m']
+[2026-03-09T20:06:01.080+0000] {standard_task_runner.py:88} INFO - Job 12: Subtask fetch_stock_data
+[2026-03-09T20:06:01.145+0000] {task_command.py:423} INFO - Running <TaskInstance: stock_market_pipeline.fetch_stock_data manual__2026-03-09T20:04:32.773171+00:00 [running]> on host 6f638ad9998e
+[2026-03-09T20:06:01.231+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-team' AIRFLOW_CTX_DAG_ID='stock_market_pipeline' AIRFLOW_CTX_TASK_ID='fetch_stock_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-09T20:04:32.773171+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-09T20:04:32.773171+00:00'
+[2026-03-09T20:06:01.817+0000] {taskinstance.py:2698} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/models/taskinstance.py", line 433, in _execute_task
+    result = execute_callable(context=context, **execute_callable_kwargs)
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 199, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.8/site-packages/airflow/operators/python.py", line 216, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/stock_pipeline_dag.py", line 24, in task_fetch_stock_data
+    from fetch_stock_data import fetch_and_store
+  File "/opt/airflow/scripts/fetch_stock_data.py", line 5, in <module>
+    import yfinance as yf
+  File "/home/airflow/.local/lib/python3.8/site-packages/yfinance/__init__.py", line 24, in <module>
+    from .tickers import Tickers
+  File "/home/airflow/.local/lib/python3.8/site-packages/yfinance/tickers.py", line 24, in <module>
+    from . import Ticker, multi
+  File "/home/airflow/.local/lib/python3.8/site-packages/yfinance/multi.py", line 28, in <module>
+    import multitasking as _multitasking
+  File "/home/airflow/.local/lib/python3.8/site-packages/multitasking/__init__.py", line 36, in <module>
+    class PoolConfig(TypedDict):
+  File "/home/airflow/.local/lib/python3.8/site-packages/multitasking/__init__.py", line 44, in PoolConfig
+    engine: Union[type[Thread], type[Process]]  # Execution engine
+TypeError: 'type' object is not subscriptable
+[2026-03-09T20:06:01.850+0000] {taskinstance.py:1138} INFO - Marking task as UP_FOR_RETRY. dag_id=stock_market_pipeline, task_id=fetch_stock_data, execution_date=20260309T200432, start_date=20260309T200601, end_date=20260309T200601
+[2026-03-09T20:06:01.862+0000] {standard_task_runner.py:107} ERROR - Failed to execute job 12 for task fetch_stock_data ('type' object is not subscriptable; 215)
+[2026-03-09T20:06:01.902+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 1
+[2026-03-09T20:06:01.932+0000] {taskinstance.py:3280} INFO - 0 downstream tasks scheduled from follow-on schedule check

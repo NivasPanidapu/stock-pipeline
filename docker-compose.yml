@@ -1,0 +1,95 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.8.1-python3.10
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    STOCK_DB_HOST: stock-db
+    STOCK_DB_PORT: 5432
+    STOCK_DB_NAME: stocks
+    STOCK_DB_USER: stocks_user
+    STOCK_DB_PASSWORD: stocks_password
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./scripts:/opt/airflow/scripts
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+  depends_on:
+    airflow-db:
+      condition: service_healthy
+
+services:
+
+  airflow-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  stock-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: stocks_user
+      POSTGRES_PASSWORD: stocks_password
+      POSTGRES_DB: stocks
+    ports:
+      - "5433:5432"
+    volumes:
+      - stock_db_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "stocks_user", "-d", "stocks"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow-common
+    command: bash -c "pip install yfinance pandas psycopg2-binary && airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: bash -c "pip install yfinance pandas psycopg2-binary && airflow webserver"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: bash -c "pip install yfinance pandas psycopg2-binary && airflow scheduler"
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      stock-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  airflow_db_data:
+  stock_db_data:
+  grafana_data:

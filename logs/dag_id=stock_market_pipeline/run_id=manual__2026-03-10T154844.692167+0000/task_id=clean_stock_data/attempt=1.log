@@ -1,0 +1,15 @@
+[2026-03-10T15:49:00.411+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: stock_market_pipeline.clean_stock_data manual__2026-03-10T15:48:44.692167+00:00 [queued]>
+[2026-03-10T15:49:00.430+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: stock_market_pipeline.clean_stock_data manual__2026-03-10T15:48:44.692167+00:00 [queued]>
+[2026-03-10T15:49:00.431+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 2
+[2026-03-10T15:49:00.458+0000] {taskinstance.py:2191} INFO - Executing <Task(PythonOperator): clean_stock_data> on 2026-03-10 15:48:44.692167+00:00
+[2026-03-10T15:49:00.466+0000] {standard_task_runner.py:60} INFO - Started process 442 to run task
+[2026-03-10T15:49:00.472+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'stock_market_pipeline', 'clean_stock_data', 'manual__2026-03-10T15:48:44.692167+00:00', '--job-id', '31', '--raw', '--subdir', 'DAGS_FOLDER/stock_pipeline_dag.py', '--cfg-path', '/tmp/tmpzoiz6jn3']
+[2026-03-10T15:49:00.475+0000] {standard_task_runner.py:88} INFO - Job 31: Subtask clean_stock_data
+[2026-03-10T15:49:00.551+0000] {task_command.py:423} INFO - Running <TaskInstance: stock_market_pipeline.clean_stock_data manual__2026-03-10T15:48:44.692167+00:00 [running]> on host 0628f5048143
+[2026-03-10T15:49:00.739+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-team' AIRFLOW_CTX_DAG_ID='stock_market_pipeline' AIRFLOW_CTX_TASK_ID='clean_stock_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-10T15:48:44.692167+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-10T15:48:44.692167+00:00'
+[2026-03-10T15:49:01.730+0000] {clean_stock_data.py:78} INFO - No new rows to clean.
+[2026-03-10T15:49:01.731+0000] {stock_pipeline_dag.py:43} INFO - Clean result: {'rows_cleaned': 0, 'rows_rejected': 0, 'rejection_reasons': {}}
+[2026-03-10T15:49:01.766+0000] {python.py:201} INFO - Done. Returned value was: None
+[2026-03-10T15:49:01.788+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=stock_market_pipeline, task_id=clean_stock_data, execution_date=20260310T154844, start_date=20260310T154900, end_date=20260310T154901
+[2026-03-10T15:49:01.870+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-03-10T15:49:01.914+0000] {taskinstance.py:3280} INFO - 1 downstream tasks scheduled from follow-on schedule check

@@ -1,0 +1,135 @@
+version: '3.8'
+
+# ============================================================
+# STOCK PIPELINE - Docker Compose
+# ============================================================
+# This file spins up 5 services:
+#   1. postgres         → stores your stock market data
+#   2. airflow-init     → one-time setup (creates DB, admin user)
+#   3. airflow-webserver→ the Airflow UI at http://localhost:8080
+#   4. airflow-scheduler→ the brain that triggers your DAGs
+#   5. airflow-worker   → (optional) executes tasks
+# ============================================================
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.8.1
+  environment:
+    # Use LocalExecutor (runs tasks locally, good for single-machine setups)
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+    # Airflow's own metadata database (tracks DAG runs, task states, logs)
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+
+    # Disable example DAGs that ship with Airflow to keep things clean
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+
+    # Your stock data database connection (used inside Python scripts)
+    STOCK_DB_HOST: stock-db
+    STOCK_DB_PORT: 5432
+    STOCK_DB_NAME: stocks
+    STOCK_DB_USER: stocks_user
+    STOCK_DB_PASSWORD: stocks_password
+
+  volumes:
+    # Mount your DAGs folder so Airflow picks them up automatically
+    - ./dags:/opt/airflow/dags
+    # Mount your helper scripts
+    - ./scripts:/opt/airflow/scripts
+    # Persist logs between container restarts
+    - ./logs:/opt/airflow/logs
+    # Mount plugins if you add custom operators later
+    - ./plugins:/opt/airflow/plugins
+
+  depends_on:
+    airflow-db:
+      condition: service_healthy
+
+services:
+
+  # ── 1. AIRFLOW METADATA DATABASE ──────────────────────────
+  # Airflow needs its own Postgres to track DAG runs, task states, etc.
+  airflow-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ── 2. YOUR STOCK DATA DATABASE ───────────────────────────
+  # This is where the actual stock price data gets stored.
+  stock-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: stocks_user
+      POSTGRES_PASSWORD: stocks_password
+      POSTGRES_DB: stocks
+    ports:
+      # Expose on 5433 so you can connect locally with psql or DBeaver
+      - "5433:5432"
+    volumes:
+      - stock_db_data:/var/lib/postgresql/data
+      # Run schema setup SQL on first launch
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "stocks_user", "-d", "stocks"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ── 3. AIRFLOW INIT (runs once, then exits) ────────────────
+  # Creates the Airflow DB tables and admin user.
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "
+        pip install yfinance pandas psycopg2-binary &&
+        airflow db migrate &&
+        airflow users create
+          --username admin
+          --password admin
+          --firstname Admin
+          --lastname User
+          --role Admin
+          --email admin@example.com
+      "
+    restart: "no"
+
+  # ── 4. AIRFLOW WEBSERVER ───────────────────────────────────
+  # The UI you interact with at http://localhost:8080
+  airflow-webserver:
+    <<: *airflow-common
+    command: >
+      bash -c "pip install yfinance pandas psycopg2-binary && airflow webserver"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # ── 5. AIRFLOW SCHEDULER ──────────────────────────────────
+  # Monitors DAGs, triggers runs on schedule, sends tasks to executor.
+  airflow-scheduler:
+    <<: *airflow-common
+    command: >
+      bash -c "pip install yfinance pandas psycopg2-binary && airflow scheduler"
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  airflow_db_data:
+  stock_db_data:
