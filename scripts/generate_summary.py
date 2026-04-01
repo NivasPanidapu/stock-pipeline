@@ -35,7 +35,7 @@ Write a concise market summary (max 150 words) covering overall sentiment, best 
 
 # Call Gemini API
 api_key = os.getenv("GEMINI_API_KEY")
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
 
 response = requests.post(url, json={
     "contents": [{"parts": [{"text": prompt}]}]
