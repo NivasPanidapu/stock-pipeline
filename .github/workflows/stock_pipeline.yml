@@ -39,3 +39,15 @@ jobs:
           STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
           STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
         run: python scripts/clean_stock_data.py
+        
+      - name: Generate AI summary
+        env:
+          STOCK_DB_HOST: ${{ secrets.STOCK_DB_HOST }}
+          STOCK_DB_PORT: ${{ secrets.STOCK_DB_PORT }}
+          STOCK_DB_NAME: ${{ secrets.STOCK_DB_NAME }}
+          STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
+          STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          pip install anthropic
+          python scripts/generate_summary.py
