@@ -1,9 +1,7 @@
 import os
 import anthropic
 import psycopg2
-from datetime import date
 
-# Get market data from DB
 conn = psycopg2.connect(
     host=os.getenv("STOCK_DB_HOST"),
     port=int(os.getenv("STOCK_DB_PORT")),
@@ -24,16 +22,14 @@ with conn.cursor() as cur:
     """)
     rows = cur.fetchall()
 
-# Build data string
 data_str = "\n".join([
     f"{r[0]}: ${float(r[1]):.2f}, Return: {float(r[2])*100:.2f}%, Volume: {int(r[3])//1000000}M"
     for r in rows
 ])
 
-# Generate summary with Claude
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 message = client.messages.create(
-    model="claude-opus-4-20250514",
+    model="claude-sonnet-4-20250514",
     max_tokens=300,
     messages=[{
         "role": "user",
@@ -42,18 +38,17 @@ message = client.messages.create(
 {data_str}
 
 Write a concise market summary (max 150 words) covering:
-- Overall sentiment
+- Overall market sentiment
 - Best and worst performer
-- One key insight
+- One key insight for investors
 
-Plain text only, no bullet points or markdown."""
+Plain text only, no bullet points or markdown symbols."""
     }]
 )
 
 summary = message.content[0].text
-print(f"Generated summary: {summary}")
+print(f"Summary: {summary}")
 
-# Save to database
 with conn.cursor() as cur:
     cur.execute("""
         INSERT INTO daily_summary (summary, generated_at)
@@ -61,4 +56,4 @@ with conn.cursor() as cur:
     """, (summary,))
 conn.commit()
 conn.close()
-print("Summary saved to database!")
+print("Summary saved!")
