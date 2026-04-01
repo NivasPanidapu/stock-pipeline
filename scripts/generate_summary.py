@@ -1,0 +1,64 @@
+import os
+import anthropic
+import psycopg2
+from datetime import date
+
+# Get market data from DB
+conn = psycopg2.connect(
+    host=os.getenv("STOCK_DB_HOST"),
+    port=int(os.getenv("STOCK_DB_PORT")),
+    dbname=os.getenv("STOCK_DB_NAME"),
+    user=os.getenv("STOCK_DB_USER"),
+    password=os.getenv("STOCK_DB_PASSWORD"),
+)
+
+with conn.cursor() as cur:
+    cur.execute("""
+        SELECT ticker, close_price, daily_return, volume
+        FROM cleaned_stock_prices
+        WHERE price_date = (
+            SELECT MAX(price_date) FROM cleaned_stock_prices
+            WHERE daily_return IS NOT NULL
+        )
+        ORDER BY ticker
+    """)
+    rows = cur.fetchall()
+
+# Build data string
+data_str = "\n".join([
+    f"{r[0]}: ${float(r[1]):.2f}, Return: {float(r[2])*100:.2f}%, Volume: {int(r[3])//1000000}M"
+    for r in rows
+])
+
+# Generate summary with Claude
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+message = client.messages.create(
+    model="claude-opus-4-20250514",
+    max_tokens=300,
+    messages=[{
+        "role": "user",
+        "content": f"""You are a professional stock market analyst. Here is today's data:
+
+{data_str}
+
+Write a concise market summary (max 150 words) covering:
+- Overall sentiment
+- Best and worst performer
+- One key insight
+
+Plain text only, no bullet points or markdown."""
+    }]
+)
+
+summary = message.content[0].text
+print(f"Generated summary: {summary}")
+
+# Save to database
+with conn.cursor() as cur:
+    cur.execute("""
+        INSERT INTO daily_summary (summary, generated_at)
+        VALUES (%s, NOW())
+    """, (summary,))
+conn.commit()
+conn.close()
+print("Summary saved to database!")
