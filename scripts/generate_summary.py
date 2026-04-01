@@ -31,24 +31,29 @@ prompt = f"""You are a professional stock market analyst. Here is today's data:
 
 {data_str}
 
-Write a concise market summary (max 150 words) covering:
-- Overall market sentiment
-- Best and worst performer
-- One key insight for investors
-
-Plain text only, no bullet points or markdown symbols."""
+Write a concise market summary (max 150 words) covering overall sentiment, best and worst performer, and one key insight. Plain text only."""
 
 # Call Gemini API
 api_key = os.getenv("GEMINI_API_KEY")
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
 
 response = requests.post(url, json={
     "contents": [{"parts": [{"text": prompt}]}]
 })
 
+print(f"Status: {response.status_code}")
+print(f"Response: {response.text[:500]}")
+
 result = response.json()
+
+if "error" in result:
+    raise Exception(f"Gemini API error: {result['error']}")
+
+if "candidates" not in result:
+    raise Exception(f"Unexpected response: {list(result.keys())}")
+
 summary = result["candidates"][0]["content"]["parts"][0]["text"]
-print(f"Summary: {summary}")
+print(f"Summary generated: {summary[:100]}")
 
 # Save to database
 with conn.cursor() as cur:
