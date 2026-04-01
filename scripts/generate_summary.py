@@ -2,6 +2,7 @@ import os
 import requests
 import psycopg2
 
+# ── Connect to database ──────────────────────────────────
 conn = psycopg2.connect(
     host=os.getenv("STOCK_DB_HOST"),
     port=int(os.getenv("STOCK_DB_PORT")),
@@ -10,6 +11,7 @@ conn = psycopg2.connect(
     password=os.getenv("STOCK_DB_PASSWORD"),
 )
 
+# ── Fetch latest market data ─────────────────────────────
 with conn.cursor() as cur:
     cur.execute("""
         SELECT ticker, close_price, daily_return, volume
@@ -27,35 +29,42 @@ data_str = "\n".join([
     for r in rows
 ])
 
+print(f"Market data:\n{data_str}")
+
+# ── Build prompt ─────────────────────────────────────────
 prompt = f"""You are a professional stock market analyst. Here is today's data:
 
 {data_str}
 
-Write a concise market summary (max 150 words) covering overall sentiment, best and worst performer, and one key insight. Plain text only."""
+Write a concise market summary (max 150 words) covering overall sentiment, best and worst performer, and one key insight for investors. Plain text only, no bullet points or markdown symbols."""
 
-# Call Gemini API
-api_key = os.getenv("GEMINI_API_KEY")
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
+# ── Call Groq API ────────────────────────────────────────
+api_key = os.getenv("GROQ_API_KEY")
+url = "https://api.groq.com/openai/v1/chat/completions"
 
-response = requests.post(url, json={
-    "contents": [{"parts": [{"text": prompt}]}]
-})
+response = requests.post(
+    url,
+    headers={
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "model": "llama-3.1-8b-instant",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 300
+    }
+)
 
 print(f"Status: {response.status_code}")
-print(f"Response: {response.text[:500]}")
-
 result = response.json()
 
 if "error" in result:
-    raise Exception(f"Gemini API error: {result['error']}")
+    raise Exception(f"Groq API error: {result['error']}")
 
-if "candidates" not in result:
-    raise Exception(f"Unexpected response: {list(result.keys())}")
+summary = result["choices"][0]["message"]["content"]
+print(f"Summary generated: {summary}")
 
-summary = result["candidates"][0]["content"]["parts"][0]["text"]
-print(f"Summary generated: {summary[:100]}")
-
-# Save to database
+# ── Save to database ─────────────────────────────────────
 with conn.cursor() as cur:
     cur.execute("""
         INSERT INTO daily_summary (summary, generated_at)
@@ -63,4 +72,4 @@ with conn.cursor() as cur:
     """, (summary,))
 conn.commit()
 conn.close()
-print("Summary saved!")
+print("Summary saved to database!")
