@@ -1,5 +1,5 @@
 import os
-import anthropic
+import requests
 import psycopg2
 
 conn = psycopg2.connect(
@@ -27,13 +27,7 @@ data_str = "\n".join([
     for r in rows
 ])
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-message = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=300,
-    messages=[{
-        "role": "user",
-        "content": f"""You are a professional stock market analyst. Here is today's data:
+prompt = f"""You are a professional stock market analyst. Here is today's data:
 
 {data_str}
 
@@ -43,12 +37,20 @@ Write a concise market summary (max 150 words) covering:
 - One key insight for investors
 
 Plain text only, no bullet points or markdown symbols."""
-    }]
-)
 
-summary = message.content[0].text
+# Call Gemini API
+api_key = os.getenv("GEMINI_API_KEY")
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+
+response = requests.post(url, json={
+    "contents": [{"parts": [{"text": prompt}]}]
+})
+
+result = response.json()
+summary = result["candidates"][0]["content"]["parts"][0]["text"]
 print(f"Summary: {summary}")
 
+# Save to database
 with conn.cursor() as cur:
     cur.execute("""
         INSERT INTO daily_summary (summary, generated_at)
