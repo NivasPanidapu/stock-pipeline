@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yfinance pandas psycopg2-binary
+          pip install yfinance pandas psycopg2-binary requests
 
       - name: Fetch stock data
         env:
@@ -39,8 +39,17 @@ jobs:
           STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
           STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
         run: python scripts/clean_stock_data.py
-        
-       - name: Generate AI summary
+
+      - name: Log pipeline run
+        env:
+          STOCK_DB_HOST: ${{ secrets.STOCK_DB_HOST }}
+          STOCK_DB_PORT: ${{ secrets.STOCK_DB_PORT }}
+          STOCK_DB_NAME: ${{ secrets.STOCK_DB_NAME }}
+          STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
+          STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
+        run: python scripts/log_pipeline_run.py
+
+      - name: Generate AI summary
         env:
           STOCK_DB_HOST: ${{ secrets.STOCK_DB_HOST }}
           STOCK_DB_PORT: ${{ secrets.STOCK_DB_PORT }}
@@ -48,5 +57,4 @@ jobs:
           STOCK_DB_USER: ${{ secrets.STOCK_DB_USER }}
           STOCK_DB_PASSWORD: ${{ secrets.STOCK_DB_PASSWORD }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: |
-          python scripts/generate_summary.py
+        run: python scripts/generate_summary.py
